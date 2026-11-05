@@ -2,7 +2,6 @@ name: Diagnostics debug APK
 on:
   push:
     branches: [main, diagnostics-first]
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -19,6 +18,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
       - name: Install Android SDK
         run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
@@ -34,3 +36,4 @@ jobs:
             diagnostics/build/outputs/apk/debug/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
+
