@@ -1,4 +1,25 @@
-# BTMicFix
+# Bluetooth-Mic-Fix-AndroidAuto
+
+**Diagnostics first. No verified cellular microphone routing fix yet.**
+
+This Apache-2.0 fork of [Endda/BTMicFix](https://github.com/Endda/BTMicFix) adds
+an isolated, passive `diagnostics` Android app. Install **BT Mic Diagnostics**
+from the `bt-mic-diagnostics-debug` artifact in a successful
+[GitHub Actions run](https://github.com/phil0079/Bluetooth-Mic-Fix-AndroidAuto/actions).
+It observes routes and Bluetooth profiles locally, including while the dialer
+is open. It does not record audio or change routing. The upstream `app` module
+is preserved for reference and is not the APK distributed by this workflow.
+
+Read the [phone-only test plan, privacy details, source audit, and control
+limitations](docs/DIAGNOSTICS.md). Android-reported routing is not verified
+physical microphone use. Do not use upstream auto-routing during baseline tests.
+
+The original README below documents upstream behavior, not a proven fix for
+Android Auto or cellular calls.
+
+---
+
+# BTMicFix (upstream README)
 
 **Fix Bluetooth earbuds microphone routing for AI voice apps on Android.**
 
