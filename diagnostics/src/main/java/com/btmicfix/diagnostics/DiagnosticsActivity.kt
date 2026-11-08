@@ -24,6 +24,7 @@ class DiagnosticsActivity : ComponentActivity() {
     private lateinit var snapshotButton: Button
     private lateinit var repairButton: Button
     private var ownsRoutingRequest = false
+    private lateinit var anonymizeExport: CheckBox
     private lateinit var diagnosticsPanel: LinearLayout
     private lateinit var repairPanel: LinearLayout
     private val saveLogLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
@@ -35,7 +36,7 @@ class DiagnosticsActivity : ComponentActivity() {
                 return@registerForActivityResult
             }
             contentResolver.openOutputStream(uri)?.use { output ->
-                file.inputStream().use { input -> input.copyTo(output) }
+                output.write(exportText(file).toByteArray(Charsets.UTF_8))
             } ?: throw java.io.IOException("Cannot open selected destination")
             Toast.makeText(this, "Diagnostic log saved", Toast.LENGTH_LONG).show()
         } catch (_: Exception) {
@@ -109,6 +110,11 @@ class DiagnosticsActivity : ComponentActivity() {
             render()
         }
         text(diagnosticsPanel, "Capture current state appends a timestamped text entry to the local log. It does not take a screenshot.", 14f)
+        anonymizeExport = CheckBox(this).apply {
+            text = "Hide device names in exported logs"
+            isChecked = false
+            diagnosticsPanel.addView(this)
+        }
         button(diagnosticsPanel, "Save log to Downloads") {
             val file = File(filesDir, DiagnosticsService.FILE_NAME)
             if (!file.exists() || file.length() == 0L)
@@ -182,6 +188,13 @@ class DiagnosticsActivity : ComponentActivity() {
         DiagnosticsService.current?.marker("Manual routing request released")
     }
 
+    private fun exportText(file: File): String {
+        val raw = file.readText()
+        if (!anonymizeExport.isChecked) return raw
+        return raw.replace(Regex("name=.*?(?= id=| profile-connected)"), "name=[hidden]")
+            .replace("Device names included locally", "Device names hidden in export")
+    }
+
     private fun shareLog() {
         val file = File(filesDir, DiagnosticsService.FILE_NAME)
         if (!file.exists() || file.length() == 0L) {
@@ -192,7 +205,7 @@ class DiagnosticsActivity : ComponentActivity() {
             // Export only the already-sanitized report, through a temporary private cache copy.
             val outDir = File(cacheDir, "shared").apply { mkdirs() }
             val export = File(outDir, "bluetooth-mic-diagnostics.txt")
-            export.writeText(file.readText())
+            export.writeText(exportText(file))
             val uri: Uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", export)
             val send = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
