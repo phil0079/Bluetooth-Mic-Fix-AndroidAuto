@@ -23,6 +23,7 @@ class DiagnosticsActivity : ComponentActivity() {
     private lateinit var stopButton: Button
     private lateinit var snapshotButton: Button
     private lateinit var repairButton: Button
+    private var ownsRoutingRequest = false
     private lateinit var diagnosticsPanel: LinearLayout
     private lateinit var repairPanel: LinearLayout
     private val saveLogLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
@@ -82,6 +83,7 @@ class DiagnosticsActivity : ComponentActivity() {
         text(repairPanel, "Experimental routing request. Android may refuse or override this during cellular calls. A successful request does NOT verify the physical microphone.", 14f)
         repairStatus = text(repairPanel, "No repair attempted.")
         repairButton = button(repairPanel, "Request Bluetooth headset route") { requestRepair() }
+        button(repairPanel, "Release routing request") { releaseRouting() }
         text(repairPanel, "This button makes one request only. It never changes audio mode, repeatedly forces routing, or automatically selects the car.", 14f)
 
         status = text(diagnosticsPanel, "")
@@ -163,9 +165,21 @@ class DiagnosticsActivity : ComponentActivity() {
             repairStatus.text = "Routing request failed: Android system rejected the operation."
             return
         }
+        ownsRoutingRequest = accepted
         val reported = audio.communicationDevice?.id == candidate.id
         repairStatus.text = "Request accepted=$accepted; reported output matches=$reported. Physical microphone NOT verified. Cellular calling may override this."
         DiagnosticsService.current?.marker("Manual routing experiment; accepted=$accepted; reportedMatch=$reported")
+    }
+
+    private fun releaseRouting() {
+        if (!ownsRoutingRequest) {
+            repairStatus.text = "No routing request owned by this app."
+            return
+        }
+        getSystemService(AudioManager::class.java).clearCommunicationDevice()
+        ownsRoutingRequest = false
+        repairStatus.text = "App routing request released; Android controls routing."
+        DiagnosticsService.current?.marker("Manual routing request released")
     }
 
     private fun shareLog() {
@@ -194,6 +208,13 @@ class DiagnosticsActivity : ComponentActivity() {
 
     override fun onStart() { super.onStart(); handler.post(update) }
     override fun onStop() { handler.removeCallbacksAndMessages(null); super.onStop() }
+    override fun onDestroy() {
+        if (ownsRoutingRequest) {
+            getSystemService(AudioManager::class.java).clearCommunicationDevice()
+            ownsRoutingRequest = false
+        }
+        super.onDestroy()
+    }
     private fun render() {
         val service = DiagnosticsService.current
         val running = service != null
