@@ -1,0 +1,26 @@
+name: Repair and diagnostics debug APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [repair-ui-and-share]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Build and lint
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :diagnostics:assembleDebug :diagnostics:testDebugUnitTest :diagnostics:lintDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bluetooth-mic-fix-debug
+          path: diagnostics/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
