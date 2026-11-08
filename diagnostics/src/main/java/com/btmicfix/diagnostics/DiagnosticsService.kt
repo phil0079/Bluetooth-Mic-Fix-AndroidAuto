@@ -133,7 +133,7 @@ class DiagnosticsService : Service() {
     private fun record(event: String) {
         journal.add((SystemClock.elapsedRealtime() - started) / 1000, event)
         report = "Reported system state only; NOT verified physical microphone use.\n" +
-            "Names/addresses omitted. Aliases are session-local; audio IDs can change.\n" + journal.text()
+            "Device names included locally; addresses omitted. Aliases are session-local; audio IDs can change.\n" + journal.text()
         // Bounded app-private file; no external storage, network, or automatic export.
         try { File(filesDir, FILE_NAME).writeText(report) }
         catch (_: java.io.IOException) { report += "\nLOCAL SAVE FAILED; keep app open to view." }
@@ -152,12 +152,12 @@ class DiagnosticsService : Service() {
             val key = if (device.address.isNullOrBlank()) "audio:${device.id}" else "bt:${device.address}"
             val alias = journal.alias(key)
             legend.add("$alias = ${device.productName} (audio id ${device.id})")
-            return "$alias id=${device.id} type=${typeName(device.type)} input=${device.isSource} output=${device.isSink}"
+            return "$alias name=${device.productName?.toString()?.replace(Regex("[\\r\\n]"), " ")?.take(80) ?: "unknown"} id=${device.id} type=${typeName(device.type)} input=${device.isSource} output=${device.isSink}"
         }
         fun btAlias(device: BluetoothDevice): String {
             val alias = journal.alias("bt:${device.address}")
             legend.add("$alias = ${device.name ?: "unnamed Bluetooth device"}")
-            return alias
+            return "$alias name=${device.name?.replace(Regex("[\\r\\n]"), " ")?.take(80) ?: "unknown"}"
         }
         fun safe(block: () -> String): String = try { block() }
             catch (_: SecurityException) { "unavailable (permission denied)" }
@@ -173,7 +173,7 @@ class DiagnosticsService : Service() {
             val ids = mutableListOf(BluetoothProfile.HEADSET, BluetoothProfile.A2DP)
             if (Build.VERSION.SDK_INT >= 33) ids.add(BluetoothProfile.LE_AUDIO)
             for (id in ids) {
-                val name = when (id) { BluetoothProfile.HEADSET -> "HFP"; BluetoothProfile.A2DP -> "A2DP"; else -> "LE Audio" }
+                val name = when (id) { BluetoothProfile.HEADSET -> "Hands-Free Profile"; BluetoothProfile.A2DP -> "Advanced Audio Distribution Profile"; else -> "Low Energy Audio" }
                 appendLine("$name: " + safe {
                     if (adapter?.isEnabled == true && id !in requested) {
                         if (adapter?.getProfileProxy(this@DiagnosticsService, profileListener, id) == true) requested.add(id)
@@ -181,7 +181,7 @@ class DiagnosticsService : Service() {
                     val proxy = profiles[id]
                     if (proxy == null) "unknown (proxy unavailable/pending)"
                     else proxy.connectedDevices.joinToString { device ->
-                        btAlias(device) + " connected" + if (proxy is BluetoothHeadset) " HFP-audio=${proxy.isAudioConnected(device)}" else ""
+                        btAlias(device) + " profile-connected" + if (proxy is BluetoothHeadset) " hands-free-audio-active=${proxy.isAudioConnected(device)}" else ""
                     }.ifEmpty { "no connected devices reported" }
                 })
             }
