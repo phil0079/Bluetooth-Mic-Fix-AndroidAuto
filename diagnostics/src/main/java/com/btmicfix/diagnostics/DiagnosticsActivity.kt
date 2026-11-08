@@ -117,12 +117,21 @@ class DiagnosticsActivity : ComponentActivity() {
             it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
                 it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
         }
-        if (devices.size != 1) {
-            repairStatus.text = "No change: found ${devices.size} Bluetooth communication candidates. Cannot safely identify the intended headset."
+        if (devices.isEmpty()) {
+            repairStatus.text = "No Bluetooth communication candidates available."
             return
         }
-        // Never change audio mode or reset another app's route. Cellular calls own their route.
-        val candidate = devices.single()
+        // Explicit selection prevents accidentally choosing the car.
+        val labels = devices.map { "${it.productName} (device ${it.id})" }.toTypedArray()
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Choose headset for this routing request")
+            .setItems(labels) { _, index -> attemptRoute(audio, devices[index]) }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun attemptRoute(audio: AudioManager, candidate: AudioDeviceInfo) {
+        // Never change audio mode or reset another app's route.
         val accepted = try { audio.setCommunicationDevice(candidate) }
         catch (e: SecurityException) {
             repairStatus.text = "Routing request denied by Android."
