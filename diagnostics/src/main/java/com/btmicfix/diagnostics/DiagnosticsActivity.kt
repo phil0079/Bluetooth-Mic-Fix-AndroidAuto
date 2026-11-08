@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
 import android.os.*
 import android.widget.*
 import androidx.activity.ComponentActivity
@@ -24,6 +25,22 @@ class DiagnosticsActivity : ComponentActivity() {
     private lateinit var repairButton: Button
     private lateinit var diagnosticsPanel: LinearLayout
     private lateinit var repairPanel: LinearLayout
+    private val saveLogLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri == null) return@registerForActivityResult
+        val file = File(filesDir, DiagnosticsService.FILE_NAME)
+        try {
+            if (!file.exists() || file.length() == 0L) {
+                Toast.makeText(this, "No log to save", Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
+            }
+            contentResolver.openOutputStream(uri)?.use { output ->
+                file.inputStream().use { input -> input.copyTo(output) }
+            } ?: throw java.io.IOException("Cannot open selected destination")
+            Toast.makeText(this, "Diagnostic log saved", Toast.LENGTH_LONG).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "Could not save diagnostic log", Toast.LENGTH_LONG).show()
+        }
+    }
     private val handler = Handler(Looper.getMainLooper())
     private val update = object : Runnable {
         override fun run() { render(); handler.postDelayed(this, 1500) }
@@ -90,8 +107,14 @@ class DiagnosticsActivity : ComponentActivity() {
             render()
         }
         text(diagnosticsPanel, "Capture current state appends a timestamped text entry to the local log. It does not take a screenshot.", 14f)
-        button(diagnosticsPanel, "Share log to ChatGPT or save file") { shareLog() }
-        text(diagnosticsPanel, "The Android share menu lets you choose ChatGPT, Downloads via a file manager, or another app. Nothing uploads automatically.", 14f)
+        button(diagnosticsPanel, "Save log to Downloads") {
+            val file = File(filesDir, DiagnosticsService.FILE_NAME)
+            if (!file.exists() || file.length() == 0L)
+                Toast.makeText(this, "No log yet. Start a session first.", Toast.LENGTH_LONG).show()
+            else saveLogLauncher.launch("bluetooth-mic-diagnostics.txt")
+        }
+        button(diagnosticsPanel, "Share log to ChatGPT or another app") { shareLog() }
+        text(diagnosticsPanel, "Save opens the Android file picker; choose Downloads. Share opens Android's sharing menu and may start a new ChatGPT conversation. Nothing uploads automatically.", 14f)
         text(diagnosticsPanel, "Markers are your observations, not automatic detection.", 14f)
         for (marker in listOf("AA OFF observed", "AA ON observed", "Call starting", "Call ended",
             "Headset selected in dialer", "Car selected in dialer", "Listener: headset strongest",
