@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <application android:label="BT Mic Diagnostics" android:allowBackup="false"
+    <application android:label="Bluetooth Mic Fix" android:allowBackup="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity android:name=".DiagnosticsActivity" android:exported="true">
             <intent-filter>
@@ -13,5 +13,8 @@
         </activity>
         <service android:name=".DiagnosticsService" android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/share_paths" />
+        </provider>
     </application>
 </manifest>
