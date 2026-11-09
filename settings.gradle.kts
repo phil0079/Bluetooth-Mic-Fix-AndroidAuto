@@ -23,3 +23,4 @@ dependencyResolutionManagement {
 rootProject.name = "BTMicFix"
 include(":app")
 include(":diagnostics")
+include(":miclab")

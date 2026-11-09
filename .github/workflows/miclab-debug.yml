@@ -1,0 +1,37 @@
+name: Desk microphone lab
+on:
+  workflow_dispatch:
+  push:
+    branches: [desk-microphone-test]
+    paths: ['miclab/**', '.github/workflows/miclab-debug.yml', '*.gradle.kts']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Compile, test and lint
+        run: bash gradlew :miclab:assembleRelease :miclab:testReleaseUnitTest :miclab:lintRelease --stacktrace
+      - name: Package official APK signing utility for local signing
+        run: |
+          mkdir -p signing-tools
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner.jar | sort -V | tail -n 1)
+          test -n "$signer"
+          cp "$signer" signing-tools/
+          sha256sum miclab/build/outputs/apk/release/*.apk signing-tools/apksigner.jar > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mic-lab-unsigned
+          path: |
+            miclab/build/outputs/apk/release/*.apk
+            signing-tools/apksigner.jar
+            SHA256SUMS.txt
+            miclab/build/reports/tests/testReleaseUnitTest/**
+            miclab/build/reports/lint-results-release.*
+          if-no-files-found: error

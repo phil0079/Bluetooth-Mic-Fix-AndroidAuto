@@ -3,6 +3,16 @@ Updated 2026-11-09. Working branch: `repair-ui-and-share`.
 Repository: https://github.com/phil0079/Bluetooth-Mic-Fix-AndroidAuto
 **Read this file first when resuming on laptop.** Earlier `PHONE-HANDOFF.md` on branch `phone-handoff` is dated November 5 and is superseded by this report.
 
+## November 9 desk-test continuation (supersedes older next-step advice below)
+
+- User authorizes routine ADB inspection, project app operation/updates, narrow permissions, source changes, commits/push, Actions builds, and reversible app-owned routing tests. Physical setup confirmation is required before capture/tones; no confirmation yet. No calls/messages, personal content, driving interaction, rooting/security weakening, uninstall/data clearing, or uploading audio/sensitive logs. Preserve existing app and logs.
+- Work now on `desk-microphone-test`, based on `repair-ui-and-share` at `cb9370d20655bbe4d88ddeb917d8ead25499d997`. Existing repair build [42686044753](https://github.com/phil0079/Bluetooth-Mic-Fix-AndroidAuto/actions/runs/42686044753) passed compile/unit tests/lint. Installed diagnostics UI appears older; installed exact SHA is unknown. No need to uninstall it.
+- Device checked via user-authorized wireless ADB: Samsung SM-S948U1, Android 17/API 37. Shokz OpenComm2 observed connected; hands-free voice transport inactive at idle. This is not microphone evidence.
+- Added separate `miclab` app for eight-second foreground captures with input preference, numerical acoustic metrics and separate opt-in paired-communication/phone-speaker experiments. It does not record raw audio. See [docs/DESK-TEST.md](docs/DESK-TEST.md). Implementation prepared; build/install/acoustic validation pending. Do not assume success from API acceptance.
+- Stable signing plan: cloud compilation, persistent private laptop test key applied to the unsigned artifact. No signing key/password in repo or public hosting. Existing diagnostics app remains untouched. Key creation/install verification pending.
+- Cloudflare deployment is authorized only to this repository's associated project after verifying its destination. Destination has not yet been established; no deployment performed.
+- Next physical step, after app preparation: user places Shokz near laptop speaker with phone isolated in another room and confirms readiness. First compare own-app phone vs Bluetooth input with both optional checkboxes off; no Android Auto. Repeat and reverse physical sound placement before claiming the active physical microphone. Later compare separate playback preference. Own-app results do not establish authority over other apps/cellular calls.
+
 ## User's objective and hardware
 - Samsung Galaxy S26 Ultra (Android API 37); 2023 Toyota RAV4 Prime with Android Auto; Shokz OpenComm2 Bluetooth headset with boom microphone.
 - Cellular calls with Android Auto active: if Shokz is already connected when call starts, call audio normally goes to car speakers. Turning headset on / reconnecting it **after call begins** makes the caller's voice audible in Shokz, but the remote party still seems to hear the **phone microphone**, not the Shokz boom. Phone-to-mouth distance affects remote intelligibility.
