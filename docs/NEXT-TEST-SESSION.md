@@ -5,7 +5,7 @@ Status: paused at the user's request on 2026-11-09. No further phone actions, to
 ## Findings to retain
 
 - BT Mic Lab 0.2.2 (`95e4180a56af`) is installed. Cloud build, unit tests and lint passed. Same-key update from 0.2.1 succeeded without uninstall/data clearing, and the displayed version/startup and permissions were verified.
-- Eight preliminary trials completed. User subsequently reported the door between rooms was open. Preserve these results but exclude them from physical microphone conclusions.
+- Eight preliminary trials completed. User subsequently reported the door between rooms was open. At the user's subsequent request, all eight preliminary result sets were deleted from the laptop and Mic Lab, including the app's latest-result copy; deletion was verified. Only these summary observations remain. Original diagnostics-app logs and settings were untouched. New trials start with no existing Mic Lab baseline file; adapt the repetition helper's initial-result check accordingly when resuming.
 - Input preference alone returned accepted while Android reported phone input. Three paired communication trials reported Shokz input. Three paired-plus-playback trials reported Shokz input and phone-speaker output simultaneously. These remain reported-route observations, not physical input/output proof.
 - Pure 997 Hz sound produced brief onset responses followed by strong attenuation during reported Shokz capture. Noise suppression is a hypothesis. Tone shape and sampling cadence may need improvement before drawing acoustic conclusions.
 - Read-only shell API probe succeeded under UID 2000: audio mode 0; preferred input lists for MIC, VOICE_RECOGNITION and VOICE_COMMUNICATION were empty. Empty lists are ambiguous, and read access proves no routing fix.
