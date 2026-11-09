@@ -2,15 +2,24 @@
 
 Status: diagnostics only; no verified routing fix or established root cause.
 
-## First build
+## Diagnostics app and current desk testing
+
+The current priority is [controlled desk testing](DESK-TEST.md) in the separate
+`miclab` app. See [current handoff](../AI-HANDOFF.md) and
+[verified privilege findings](PRIVILEGE-FINDINGS.md). No acoustic fix is established.
+The `diagnostics` app now also has a Repair tab with explicit communication-route
+request/release controls; it remains passive until a user requests that action.
+It does not measure the physical microphone. The earlier car test's accepted
+requests did not produce a user-observed microphone improvement.
 
 Install **BT Mic Diagnostics**, package `com.btmicfix.diagnostics`, from the
 `bt-mic-diagnostics-debug` artifact on the successful **Diagnostics debug APK**
 GitHub Actions run. Sign in to GitHub, download/extract the ZIP, and open
 `diagnostics-debug.apk` on Android. A debug APK is not a Play Store release.
-CI uses an ephemeral debug signing key; a future build may require uninstalling
-this diagnostics app first (which deletes its local session). Preserve any needed
-results before doing that. The original BTMicFix app is a separate package.
+This legacy diagnostics workflow uses an ephemeral debug signing key. Do not
+uninstall or clear data to address a signature mismatch without explicit user
+approval and preservation of its results. The newer Mic Lab uses a persistent
+local signing key and a separate package; its installation preserved diagnostics.
 
 The new module is isolated from upstream routing code. It requests Bluetooth
 connection access, foreground-service permissions, and optional notifications.
@@ -27,9 +36,10 @@ the process; it does not automatically restart. Check RUNNING status and the
 notification before each test. Missing callbacks are not proof of no change.
 
 The report is capped at 400 events and saved in app-private `last-session.txt`.
-Starting a new session replaces it. Names are displayed only in the live device
-legend; names, addresses, phone numbers, call content and raw system dumps are
-never written to the report. Aliases reset each session. Audio IDs are temporary;
+Starting a new session replaces it, so preserve the prior report first. Current
+source includes device names in local reports as well as the live legend; the
+export checkbox can hide those names. Addresses, phone numbers, call content and
+raw system dumps are not written to the report. Aliases reset each session. Audio IDs are temporary;
 devices whose addresses Android hides cannot reliably be matched across APIs.
 No upload, automatic sharing, clipboard export, or call recording is performed.
 The in-app report remains readable after stopping. Stop with the app button or
@@ -78,7 +88,11 @@ and permission failures must be checked on the Samsung build. Raw `dumpsys audio
 data. Do not upload them or integrate a generic shell runner. A later optional
 helper should execute fixed argument arrays with time/output limits and return
 only allowlisted structured fields. It must never claim Shizuku bypasses Telecom.
-No Shizuku or ADB commands have been run on the phone for this implementation.
+Read-only ADB inspection has now confirmed access to audio-policy dumps and
+privileged routing grants for this Samsung's shell package. See the detailed
+[findings and read-only probe](PRIVILEGE-FINDINGS.md). Shizuku itself has not been
+used for this investigation. Do not infer either successful routing or universal
+inability from shell privilege alone.
 
 CarConnection + routing timelines can show correlation with Android Auto
 connection. Public callbacks do not name the caller that changed the route.

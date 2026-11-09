@@ -2,13 +2,26 @@
 
 **Diagnostics first. No verified cellular microphone routing fix yet.**
 
-This Apache-2.0 fork of [Endda/BTMicFix](https://github.com/Endda/BTMicFix) adds
-an isolated, passive `diagnostics` Android app. Install **BT Mic Diagnostics**
-from the `bt-mic-diagnostics-debug` artifact in a successful
-[GitHub Actions run](https://github.com/phil0079/Bluetooth-Mic-Fix-AndroidAuto/actions).
-It observes routes and Bluetooth profiles locally, including while the dialer
-is open. It does not record audio or change routing. The upstream `app` module
-is preserved for reference and is not the APK distributed by this workflow.
+This Apache-2.0 fork of [Endda/BTMicFix](https://github.com/Endda/BTMicFix) contains
+two separate investigation apps. Active desk development is on `desk-microphone-test`,
+based on `repair-ui-and-share`; start with [AI-HANDOFF.md](AI-HANDOFF.md).
+
+- **Bluetooth Mic Fix** (`diagnostics`): local Bluetooth/routing timelines and
+  explicit manual communication-route request/release controls. It does not
+  record audio. Its earlier passive-only documentation does not describe the
+  newer Repair tab.
+- **BT Mic Lab** (`miclab`): bounded foreground microphone measurements, with
+  separate input and playback preference experiments. No raw audio is retained
+  or uploaded. Cloud builds produce an unsigned APK that the authorized laptop
+  signs with a persistent private test key before installation. Version 0.2.1
+  is installed; acoustic validation is pending.
+
+See [desk testing and build instructions](docs/DESK-TEST.md),
+[Android/Shizuku findings](docs/PRIVILEGE-FINDINGS.md), and
+[GitHub Actions](https://github.com/phil0079/Bluetooth-Mic-Fix-AndroidAuto/actions).
+The upstream `app` module is preserved for reference and is not included in
+either investigation APK. Do not uninstall existing apps or clear their logs
+to work around a signing mismatch.
 
 Read the [phone-only test plan, privacy details, source audit, and control
 limitations](docs/DIAGNOSTICS.md). Android-reported routing is not verified
