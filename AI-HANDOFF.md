@@ -1,0 +1,47 @@
+# AI handoff — Android Auto / Shokz microphone routing
+Updated 2026-11-09. Working branch: `repair-ui-and-share`.
+Repository: https://github.com/phil0079/Bluetooth-Mic-Fix-AndroidAuto
+**Read this file first when resuming on laptop.** Earlier `PHONE-HANDOFF.md` on branch `phone-handoff` is dated November 5 and is superseded by this report.
+
+## User's objective and hardware
+- Samsung Galaxy S26 Ultra (Android API 37); 2023 Toyota RAV4 Prime with Android Auto; Shokz OpenComm2 Bluetooth headset with boom microphone.
+- Cellular calls with Android Auto active: if Shokz is already connected when call starts, call audio normally goes to car speakers. Turning headset on / reconnecting it **after call begins** makes the caller's voice audible in Shokz, but the remote party still seems to hear the **phone microphone**, not the Shokz boom. Phone-to-mouth distance affects remote intelligibility.
+- When headset absent, car microphone should continue working normally. Do not break this.
+- Prior ChatGPT Voice experiment suggested the Shokz boom mic can work outside cellular calls; headset hardware mute stopped voice recognition. This does not establish the cellular call microphone.
+- User prefers one troubleshooting step at a time, concise explanations, and **spell out Bluetooth technical acronyms** in conversation. Any interactive call tests while safely parked or with passenger operating phone.
+
+## Repository history and branches
+- Fork of `Endda/BTMicFix`; upstream original app preserved, not the diagnostic app.
+- `diagnostics-first`: Codex's diagnostic-only module; `docs/DIAGNOSTICS.md` includes source audit, limitations and baseline plan.
+- `phone-handoff`: outdated `PHONE-HANDOFF.md`.
+- `repair-ui-and-share`: current working branch; new diagnostic APK with Repair and Diagnostics tabs, manual `AudioManager.setCommunicationDevice()` request, release control, start/stop foreground session, markers, Save to Downloads, share-sheet export; workflow `.github/workflows/repair-debug.yml`. User installed and successfully ran this version.
+- Two more commits on current branch: `f036776` adds readable Bluetooth device names in local logs and distinguishes profile-connected vs active hands-free audio; `443c0ae` adds export checkbox to hide names. **These newest changes were not confirmed built/installed**; user's uploaded test log is from older installed version and still says `Names/addresses omitted`.
+- CI initially failed because Android SDK setup action was obsolete; removed it and a later workflow build succeeded. CI debug signing may vary between builds; reinstall may require uninstalling previous APK, deleting its private logs. Save exports before uninstall. Persistent signing remains unresolved.
+- The repo README and `docs/DIAGNOSTICS.md` still describe the original passive-only version and need updating if code changes continue.
+- App package: `com.btmicfix.diagnostics`. Important source files: `diagnostics/src/main/java/com/btmicfix/diagnostics/DiagnosticsActivity.kt`, `DiagnosticsService.kt`, `EventJournal.kt`.
+
+## What we actually tested
+- Several short passive sessions successfully captured Android Auto connected, two connected Bluetooth Hands-Free Profile devices, neither carrying hands-free audio when no call was active. Names anonymized so identities initially uncertain. Logs were exported via Save to Downloads and attached to ChatGPT.
+- Extended live cellular call test: user started call with RAV4/Android Auto; headset turned on during call, which transferred call playback to Shokz. Caller continued hearing apparent phone microphone, despite headset playback.
+- Detailed uploaded log (1,868 lines; original conversation attachment named `bluetooth-mic-diagnostics.txt`) shows:
+  - At +0 seconds: `Audio mode=IN_CALL`; `device-1` hands-free audio true (likely car), `device-11` connected but inactive.
+  - At +479–482 seconds: Bluetooth device connected; active Hands-Free Profile audio and reported communication output switch from `device-1` to `device-12`; `device-12` also connects to Advanced Audio Distribution Profile. This strongly matches Shokz joining mid-call, but names were omitted.
+  - At +505 seconds: `USER MARKER: Manual routing experiment; accepted=true; reportedMatch=true`; output already `device-12`.
+  - At +523 seconds: same successful *API* request and reported match, still `device-12`.
+  - **No audible microphone improvement** reported by user after repair. Thus `setCommunicationDevice()` request accepted but did not solve the cellular-call microphone problem.
+  - At +535 seconds active hands-free audio changes back to `device-1` (likely car); at +550 seconds reported output changes to phone earpiece; Android Auto disconnects at +584 seconds. Later reconnects. The log records Android state, NOT the actual microphone feeding the cellular call.
+  - Call ended around +779 seconds. The service kept running afterward.
+- The app does not record microphone audio or expose a definitive active physical input. Do not claim proof that the phone mic was active solely from `AudioManager`; user's phone-distance observation is acoustic evidence.
+- Important: two Bluetooth devices reported connected in earlier logs do not include the phone itself. Could be car, headset, watch, etc. Never assume identity from anonymized aliases across sessions.
+- User has **not answered** whether pressing Shokz physical boom mute during the cellular call prevents the remote party from hearing them. That is a useful discriminating test, but avoid repeating failed repair requests.
+
+## Engineering conclusions / next investigation
+1. The output route is successfully switching to a Bluetooth hands-free connection when Shokz joins mid-call. Repeated `setCommunicationDevice()` requests do not change the outcome; don't treat API `true` or reported route match as verified mic input.
+2. Investigate whether Samsung's telephony / Android Auto routing arbitration retains phone microphone despite hands-free output. Standard third-party `AudioManager` has limited authority over cellular calls; `MODE_IN_CALL` is controlled by privileged telephony. Original upstream Shizuku fallback is unreliable; see source audit.
+3. Next *single* low-risk diagnostic: with same call routing reproduced, press the physical mute on Shokz and ask listener if speech still passes. Alternatively compare call with Android Auto fully disconnected but headset connected, then reconnect car; isolate the interaction.
+4. If continuing code work, verify newest workflow builds, confirm installed version (add visible build version), inspect `setCommunicationDevice()` limitations and whether activity `onDestroy` clears the routing request when dialer foregrounded. Do not add invasive privileged workarounds without a strong reason.
+5. Improve diagnostics to report named connected devices and clearly separate profile connection, active hands-free audio, communication output and **unverified** microphone. Ensure export privacy toggle works, compile and test. Source README/doc accuracy and stable signing are maintenance tasks, not prerequisites to more acoustic tests.
+6. Preserve user choice: Shokz microphone when headset selected; RAV4 microphone when headset not selected.
+
+## Handoff prompt for laptop
+"Open `AI-HANDOFF.md` on branch `repair-ui-and-share` in `phil0079/Bluetooth-Mic-Fix-AndroidAuto`. Read `docs/DIAGNOSTICS.md` and current diagnostics source. Continue from the **failed cellular call repair experiment**: two manual routing requests returned accepted=true/reportedMatch=true while Shokz carried call output, but caller still heard apparent phone mic. Do not restart from scratch or assume output routing proves mic input. Give me one test at a time; first identify a decisive physical mic test and inspect code/workflow only as necessary."
