@@ -26,7 +26,7 @@ AOSP has privileged capture-preset preference APIs, including `getPreferredDevic
 
 `ShellAudioProbe` is packaged in Mic Lab but is not an Android component and is not invoked by its UI. Explicit ADB `app_process` execution as UID 2000 queries mode and capture-preset preferences for MIC (1), VOICE_RECOGNITION (6), and VOICE_COMMUNICATION (7). It has a ten-second watchdog, no arbitrary command arguments, no recording, and no mutation methods. It reports only device role/type, never names or addresses. It does not disable hidden-API enforcement or modify security settings.
 
-Build/execution validation pending. A successful read would establish diagnostic access only. An empty result is ambiguous: AOSP returns an empty list for a native query failure as well as no preferences. The probe cannot prove microphone use or control over another app.
+Build and execution validated on 2026-11-09: shell UID 2000, reported mode 0, preferredCount=0 for all three presets. This establishes diagnostic access only. An empty result is ambiguous: AOSP returns an empty list for a native query failure as well as no preferences. The probe cannot prove microphone use or control over another app.
 
 ## Scope for any later experiment
 
